@@ -1,6 +1,8 @@
 # data_io.py  —— 数据读写
 from pathlib import Path
+
 import pandas as pd
+
 
 def load_data(path: Path) -> pd.DataFrame:
     if path.suffix.lower() == ".xlsx":

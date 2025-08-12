@@ -14,51 +14,32 @@
     <div class="row">
       <div class="col-md-6">
         <table class="table table-hover table-sm align-middle">
-          <thead class="table-light">
-            <tr><th>姓名</th><th>月份</th><th>含早到</th><th>9点后</th></tr>
-          </thead>
-          <tbody>
-            
-            <tr>
-              <td>张三</td>
-              <td>2025-08</td>
-              <td>29.3</td>
-              <td>27.1</td>
-            </tr>
-            
-            <tr>
-              <td>李四</td>
-              <td>2025-08</td>
-              <td>2.9</td>
-              <td>1.6</td>
-            </tr>
-            
-          </tbody>
+          <thead class="table-light"><tr><th>姓名</th><th>月份</th><th>9点前</th><th>9点后</th></tr></thead>
+          <tbody><tr><td>张三</td><td>2025-08</td><td>29.3</td><td>27.1</td></tr><tr><td>李四</td><td>2025-08</td><td>2.9</td><td>1.6</td></tr></tbody>
         </table>
       </div>
-      <div class="col-md-6">
-        <div id="bar" style="height:260px;"></div>
-      </div>
+      <div class="col-md-6"><div id="bar" style="height:260px;"></div></div>
     </div>
     
-    <h3 class="mt-4">AI 再分配 & 健康建议</h3>
-    <table class="table table-sm">
-      <thead class="table-light">
-        <tr><th>姓名</th><th>已加班</th><th>再分配</th><th>健康提醒</th><th>预计完成日期</th></tr>
-      </thead>
-      <tbody><tr><td colspan='5' class='text-danger'>AI 调用失败：'SILICONFLOW_KEY'</td></tr></tbody>
-    </table>
-    
+        <h4>当前阶段：月中 &nbsp;&nbsp; 剩余工作日：14 天</h4>
+        <table class="table table-sm table-bordered">
+          <thead class="table-light">
+            <tr>
+              <th>姓名</th>
+              <th>已加班</th>
+              <th>再分配</th>
+              <th>建议</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>张三</td><td>27.1</td><td>1.9</td><td>注意休息，避免过度劳累</td></tr><tr><td>李四</td><td>1.6</td><td>0.1</td><td>保持良好的作息习惯</td></tr>
+          </tbody>
+        </table>
+        
   </div>
   <script>
     var chart = echarts.init(document.getElementById('bar'));
-    chart.setOption({
-      title:{text:'9点后加班对比',left:'center'},
-      tooltip:{},
-      xAxis:{type:'category',data:["\u5f20\u4e09", "\u674e\u56db"]},
-      yAxis:{type:'value'},
-      series:[{data:[27.083333333333336, 1.5999999999999996],type:'bar',itemStyle:{color:'#5470c6'}}]
-    });
+    chart.setOption({title:{text:'9点后加班对比',left:'center'},tooltip:{},xAxis:{type:'category',data:["\u5f20\u4e09", "\u674e\u56db"]},yAxis:{type:'value'},series:[{data:[27.083333333333336, 1.5999999999999996],type:'bar',itemStyle:{color:'#5470c6'}}]});
   </script>
 </body>
 </html>
