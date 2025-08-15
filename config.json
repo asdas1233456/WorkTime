@@ -1,0 +1,14 @@
+{
+  "office": {
+    "work_start": "09:00",
+    "work_end": "18:00",
+    "lunch_break_minutes": 60,
+    "required_overtime_hours_monthly": 20
+  },
+  "ai": {
+    "enabled": false,
+    "api_base": "https://api.openai.com/v1",
+    "model": "gpt-4o-mini",
+    "api_key": ""
+  }
+}
