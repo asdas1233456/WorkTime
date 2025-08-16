@@ -1,0 +1,21 @@
+intro:
+  - "今天是 {today}，掐指一算，{phase}已经悄悄上线🫣。"
+  - "叮！{today} 打卡，{phase}模式已就位。"
+  - "{today} 了喂，{phase}的加班余额还剩多少？🧮"
+
+stat:
+  - "当前已肝 {already:.1f}h / {required}h，缺口 {need:.1f}h，相当于 {eq_days:.1f} 个《甄嬛传》全集😵‍💫。"
+  - "已攒 {already:.1f}h，离 KPI 还有 {need:.1f}h —— 别慌，宇宙会听见你的 Ctrl+S。"
+
+work_plan:
+  - "工作日方案：每天 18:00 往后加 {daily:.1f}h，大概 {end_clock} 收工，坚持 {days_left} 天就能上岸！"
+  - "工作日：18:00 → {end_clock}（{daily:.1f}h×{days_left}天），就当多蹭公司空调💨。"
+
+sat_plan:
+  - "周六方案：还有 {saturdays_left} 个周六，每趟 ≥6h，共可回血 ≥{sat_total_hours:.0f}h。"
+  - "周六冲量：{saturdays_left} 个 6h 周末，把 KPI 按在地上摩擦！"
+
+phase_tip:
+  月初: "月初别浪，周六先攒点余粮，工作日还能摸鱼🐟。"
+  月中: "月中进入拉锯战，周六+工作日双线程，别掉线！"
+  月末: "月末冲刺！周六狂飙+工作日补刀，胜利在望🚩。"

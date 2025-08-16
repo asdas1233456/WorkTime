@@ -1,7 +1,6 @@
 import json
 import os
 import datetime as dt
-import tabulate
 import chinese_calendar as cc
 import numpy as np
 import pandas as pd
