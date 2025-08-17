@@ -4,9 +4,11 @@ import pandas as pd
 from data_cleaner import clean
 from overtime_core import build_anomaly_flags, _calc_overtime
 from overtime_logger import write_log
+from paths import CONFIG_PATH, DATA_DIR, OUTPUT_DIR
+
 
 def report_overtime(path: str, cfg_path: str) -> pd.DataFrame:
-    with open(cfg_path, encoding="utf-8") as f:
+    with open(CONFIG_PATH, encoding="utf-8") as f:
         cfg = json.load(f)
 
     df = clean(path)
@@ -16,4 +18,12 @@ def report_overtime(path: str, cfg_path: str) -> pd.DataFrame:
     bad_mask = flag_df[["date_null", "absence", "late_early"]].any(axis=1)
     df = df[~bad_mask].copy()
     df = _calc_overtime(df, cfg)
-    return df.drop(columns=["raw_row"])
+    df = df.drop(columns=["raw_row"])
+    df.to_excel(OUTPUT_DIR / "overtime_report.xlsx", index=False)
+    out = df.copy()
+    out["date"] = out["date"].dt.strftime("%Y-%m-%d")
+    out.to_json(OUTPUT_DIR / "overtime_report.json",
+                orient="records",
+                force_ascii=False,
+                indent=2)
+    return df

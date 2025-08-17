@@ -1,3 +1,4 @@
+# WorkTime/prompts.yml
 intro:
   - "今天是 {today}，掐指一算，{phase}已经悄悄上线🫣。"
   - "叮！{today} 打卡，{phase}模式已就位。"
@@ -14,6 +15,9 @@ work_plan:
 sat_plan:
   - "周六方案：还有 {saturdays_left} 个周六，每趟 ≥6h，共可回血 ≥{sat_total_hours:.0f}h。"
   - "周六冲量：{saturdays_left} 个 6h 周末，把 KPI 按在地上摩擦！"
+
+month_end_rush:
+  - "周末档期已满？赶紧呼叫主管发放 **延期赦免券** 或 **调休彩蛋**，别让 KPI 把灵魂掏空！"
 
 phase_tip:
   月初: "月初别浪，周六先攒点余粮，工作日还能摸鱼🐟。"

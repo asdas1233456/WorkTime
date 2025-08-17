@@ -7,7 +7,7 @@
 import os
 import json
 import pandas as pd
-
+from paths import LOG_DIR
 
 # ---------- 1. 写 TXT ----------
 def write_log(df: pd.DataFrame, flag_df: pd.DataFrame) -> None:
@@ -35,6 +35,8 @@ def write_log(df: pd.DataFrame, flag_df: pd.DataFrame) -> None:
                 msg.append("缺勤")
             if flag_df.at[idx, "date_null"]:
                 msg.append("日期信息异常")
+            if flag_df.at[idx, "future_date"]:
+                msg.append("未来日期")
 
             fp.write(
                 f"{no:<5}"
@@ -45,10 +47,11 @@ def write_log(df: pd.DataFrame, flag_df: pd.DataFrame) -> None:
                 f"{'+'.join(msg)}\n"
             )
 
-    with open("log/异常汇总.txt", "w", encoding="utf-8") as f:
+    with open(LOG_DIR / "异常汇总.txt", "w", encoding="utf-8") as f:
         _write_table(f, "文件异常", flag_df["date_null"])
         _write_table(f, "考勤异常", flag_df["absence"])
         _write_table(f, "迟到/早退", flag_df["late_early"])
+        _write_table(f, "未来日期", flag_df["future_date"])
 
 
 # ---------- 2. 写 JSON ----------
@@ -67,6 +70,8 @@ def export_log_json(df: pd.DataFrame, flag_df: pd.DataFrame) -> list[dict]:
             issues.append("缺勤")
         if flag_df.at[idx, "date_null"]:
             issues.append("日期信息异常")
+        if flag_df.at[idx, "future_date"]:
+            issues.append("未来日期")
 
         if issues:  # 只记录有异常的行
             result.append({
@@ -86,6 +91,6 @@ def write_logs(df: pd.DataFrame, flag_df: pd.DataFrame) -> None:
     """
     write_log(df, flag_df)          # 人可读
     json_log = export_log_json(df, flag_df)
-    os.makedirs("log", exist_ok=True)
-    with open("log/异常汇总.json", "w", encoding="utf-8") as f:
+    os.makedirs(LOG_DIR, exist_ok=True)
+    with open(LOG_DIR / "异常汇总.txt", "w", encoding="utf-8") as f:
         json.dump(json_log, f, ensure_ascii=False, indent=2)

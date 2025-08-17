@@ -40,11 +40,12 @@ def build_anomaly_flags(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 
     flag_df = pd.DataFrame(index=df.index)
     flag_df["date_null"] = df["date"].isna()
+    flag_df["future_date"] = (df["date"] > pd.Timestamp.today().normalize()) & df["date"].notna()
     flag_df["absence"] = df[["actual_start", "actual_end"]].isna().any(axis=1)
     flag_df["late"] = False
     flag_df["early"] = False
 
-    clean_mask = ~(flag_df["date_null"] | flag_df["absence"])
+    clean_mask = ~(flag_df["date_null"] | flag_df["absence"] | flag_df["future_date"])
     if clean_mask.any():
         _start = pd.to_datetime(
             df.loc[clean_mask, "actual_start"], format="%H:%M", errors="coerce"
