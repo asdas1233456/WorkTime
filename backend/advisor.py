@@ -35,7 +35,6 @@ def load_this_year_holidays() -> dict:
     return holidays
 
 HOLIDAYS_THIS_YEAR = load_this_year_holidays()
-HOLIDAYS_THIS_YEAR = load_this_year_holidays()
 
 # ---------- 内置兜底模板 ----------
 _BUILTIN = {
@@ -195,10 +194,29 @@ def _ask_ai(prompt: str, cfg: dict) -> tuple[str | None, str]:
     except Exception as e:
         return None, str(e)
 
+# ---------- 纯事实 prompt ----------
+def _plain_text_prompt(**ctx) -> str:
+    """
+    只给 AI 事实，不带兜底文案，方便它自由发挥。
+    """
+    return (
+        f"今天是 {ctx['today']}，本月 KPI 要求加班 {ctx['required']}h，"
+        f"目前已加班 {ctx['already']:.1f}h，缺口 {ctx['need']:.1f}h。\n"
+        f"本月还剩 {ctx['days_left']} 个工作日，{ctx['saturdays_left']} 个周六，"
+        f"请给出一份人性化的加班计划，并用轻松幽默的语气鼓励我。"
+    )
+
+def _plain_rush_prompt(**ctx) -> str:
+    return (
+        f"紧急！今天是 {ctx['today']}，本月加班缺口 {ctx['need']:.1f}h，"
+        f"剩余工作日 {ctx['days_left']} 天，"
+        f"光靠工作日已无法完成 KPI。请给出一份“月末冲刺”方案，"
+        f"包括周末需要加班多少小时，以及如何调整心态。"
+    )
+
+
 # ---------- 主函数 ----------
 def make_plan(df: pd.DataFrame, cfg: dict):
-    import chinese_calendar as cc
-
     today = _today()
     required = cfg["office"]["required_overtime_hours_monthly"]
     already = df["overtime_hours"].sum()
@@ -215,7 +233,6 @@ def make_plan(df: pd.DataFrame, cfg: dict):
     sat_total_hours = saturdays_left * 6
     remain_after_sat = max(need - sat_total_hours, 0)
 
-    # 统一列结构（全部为字符串或可 JSON 序列化）
     base_cols = {
         "当前日期": today.isoformat(),
         "阶段": phase,
@@ -228,46 +245,78 @@ def make_plan(df: pd.DataFrame, cfg: dict):
         "AI错误": None
     }
 
-    # 月末冲刺场景
+    # 1️⃣ 先把彩蛋写进 base_cols，保证 JSON 不缺字段
+    holiday_info = holiday_egg(today)
+    base_cols.update(holiday_info)
+
+    # 2️⃣ 构造彩蛋 emoji 块，用于 prompt 约束
+    holiday_emoji_block = (
+        f"{holiday_info['this_month_holiday']}\n"
+        f"{holiday_info['prev_holiday']}\n"
+        f"{holiday_info['next_holiday']}"
+    )
+
+    # 3️⃣ 月末冲刺场景
     if days_left == 0 or (days_left and remain_after_sat / days_left > 12):
         weekend_hours = max(need / 2, 6)
-        advice = _ask_ai(_humanize_rush(
-            days_left=days_left,
+        plain_prompt = _plain_rush_prompt(
+            today=today,
             need=need,
-            weekend_hours=round(weekend_hours, 1),
-            remaining=need
-        ), cfg)[0] or _humanize_rush(days_left=days_left, need=need,
-                                     weekend_hours=round(weekend_hours, 1),
-                                     remaining=need)
+            days_left=days_left,
+            weekend_hours=round(weekend_hours, 1)
+        ) + (
+            f"\n\n假期彩蛋（请按照下面 3 句话输出，保留 emoji 和顺序，可措辞）：\n"
+            f"{holiday_emoji_block}"
+        )
+        ai_text, err_msg = _ask_ai(plain_prompt, cfg)
+        advice = ai_text if ai_text else (
+            _humanize_rush(
+                days_left=days_left,
+                need=need,
+                weekend_hours=round(weekend_hours, 1),
+                remaining=need
+            )
+            + "\n\n" + holiday_emoji_block   # 兜底时手动补
+        )
         base_cols.update({
             "阶段": "月末冲刺",
             "每日目标(h)": "-",
             "周末冲刺(h)": round(weekend_hours, 1),
-            "来源": "冲刺",
+            "来源": "AI" if ai_text else "兜底",
+            "AI错误": err_msg if err_msg else None
         })
     else:
         daily = round(remain_after_sat / days_left, 1) if days_left else 0
         end_clock = (dt.datetime.combine(today, dt.time(18, 0))
                      + dt.timedelta(hours=daily)).strftime("%H:%M")
-        prompt = _humanize_text(
-            today=today, phase=phase, need=need, already=already,
-            required=required, daily=daily, days_left=days_left,
-            end_clock=end_clock, saturdays_left=saturdays_left,
-            sat_total_hours=sat_total_hours
+        plain_prompt = _plain_text_prompt(
+            today=today, required=required, already=already, need=need,
+            days_left=days_left, daily=daily, saturdays_left=saturdays_left
+        ) + (
+            f"\n\n假期彩蛋（请按照下面 3 句话输出，保留 emoji 和顺序，可措辞）：\n"
+            f"{holiday_emoji_block}"
         )
-        ai_text, err_msg = _ask_ai(prompt, cfg)
-        advice = ai_text if ai_text else prompt
+        ai_text, err_msg = _ask_ai(plain_prompt, cfg)
+        if ai_text:
+            advice = ai_text
+            src = "AI"
+        else:
+            advice = (
+                _humanize_text(
+                    today=today, phase=phase, need=need, already=already,
+                    required=required, daily=daily, days_left=days_left,
+                    end_clock=end_clock, saturdays_left=saturdays_left,
+                    sat_total_hours=sat_total_hours
+                )
+                + "\n\n" + holiday_emoji_block   # 兜底时手动补
+            )
+            src = "兜底"
         base_cols.update({
             "每日目标(h)": str(daily) if days_left else "-",
             "周末冲刺(h)": "-",
-            "来源": "AI" if ai_text else "兜底",
+            "来源": src,
             "AI错误": err_msg if err_msg else None
         })
-
-    # 节假日彩蛋
-    holiday_msg = holiday_egg(today)
-    base_cols.update(holiday_msg)
-    advice += "\n\n" + "\n".join(holiday_msg.values())
 
     json_result = {
         "current_date": today.isoformat(),

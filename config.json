@@ -8,9 +8,9 @@
   "ai": {
     "api_base": "https://api.siliconflow.cn/v1",
     "model": "deepseek-ai/DeepSeek-V3",
-    "api_key": "sk-swuyugqxspwgdmkunxwijtftwuldciegnhpgoyuwvaajwwvm123",
+    "api_key": "sk-swuyugqxspwgdmkunxwijtftwuldciegnhpgoyuwvaajwwvm",
     "max_tokens": 400,
     "temperature": 0.6,
-    "timeout": 30
+    "timeout": 60
   }
 }

@@ -21,12 +21,10 @@ def main():
     summary_df, advice, json_result= make_plan(df, cfg)
 
     # 4) 落盘
-    summary_df.to_excel(OUTPUT_DIR/"加班计划.xlsx", index=False)
     with open(OUTPUT_DIR /"加班计划.txt", "w", encoding="utf-8") as f:
         f.write(advice)
     with open(OUTPUT_DIR /"加班计划.json", "w", encoding="utf-8") as f:
         json.dump(json_result, f, ensure_ascii=False, indent=2)
-
 
     print("已生成：overtime_report.xlsx / 加班计划.xlsx / 加班计划.txt / 加班计划.json")
 
