@@ -3,12 +3,12 @@
     "work_start": "09:00",
     "work_end": "18:00",
     "lunch_break_minutes": 90,
-    "required_overtime_hours_monthly": 60
+    "required_overtime_hours_monthly": 20
   },
   "ai": {
     "api_base": "https://api.siliconflow.cn/v1",
     "model": "deepseek-ai/DeepSeek-V3",
-    "api_key": "sk-swuyugqxspwgdmkunxwijtftwuldciegnhpgoyuwvaajwwvm",
+    "api_key": "sk-swuyugqxspwgdmkunxwijtftwuldciegnhpgoyuwvaajwwvm123",
     "max_tokens": 400,
     "temperature": 0.6,
     "timeout": 60

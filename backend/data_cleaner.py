@@ -61,7 +61,7 @@ def clean(path: str) -> pd.DataFrame:
     任何异常都会写入 log/数据清洗异常.txt
     """
     try:
-        df_raw = _load_raw(INPUT_DIR / "打卡记录.xlsx")
+        df_raw = _load_raw(path)
 
         # 原始行号（含表头，从 2 开始）
         df_raw.insert(0, "raw_row", range(2, len(df_raw) + 2))
