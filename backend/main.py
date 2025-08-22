@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
 DATA_DIR.mkdir(exist_ok=True)
 
+
 def main():
     # 1) 生成明细
     df = report_overtime(INPUT_DIR / "打卡记录.xlsx",CONFIG_PATH)
