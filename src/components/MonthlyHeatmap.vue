@@ -1,187 +1,170 @@
 <template>
-  <div class="heatmap-container">
-    <!-- 星期标题 -->
-    <div class="weekdays">
-      <div class="weekday">一</div>
-      <div class="weekday">二</div>
-      <div class="weekday">三</div>
-      <div class="weekday">四</div>
-      <div class="weekday">五</div>
-      <div class="weekday">六</div>
-      <div class="weekday">日</div>
+  <div class="heatmap">
+    <!-- 星期表头 -->
+    <div class="heatmap-header">
+      <div class="header-item">一</div>
+      <div class="header-item">二</div>
+      <div class="header-item">三</div>
+      <div class="header-item">四</div>
+      <div class="header-item">五</div>
+      <div class="header-item">六</div>
+      <div class="header-item">日</div>
     </div>
 
     <!-- 热力图网格 -->
     <div class="heatmap-grid">
-      <!-- 月初前的空白单元格 -->
-      <div class="heatmap-cell empty" v-for="i in emptyDays" :key="'empty-' + i"></div>
+      <!-- 月初空白占位 -->
+      <div
+        class="heatmap-cell empty"
+        v-for="(_, idx) in emptyDays"
+        :key="`empty-${idx}`"
+      ></div>
 
-      <!-- 当月日期单元格 -->
+      <!-- 日期单元格 -->
+
       <div
         class="heatmap-cell"
-        v-for="day in monthDays"
-        :key="'day-' + day"
+        v-for="(day, idx) in monthDays"
+        :key="`day-${idx}`"
         :style="{ backgroundColor: getCellColor(day) }"
         @mouseenter="showTooltip(day)"
-        @mouseleave="hideTooltip"
+        @mouseleave="hideTooltip()"
       >
         <span class="day-number">{{ day }}</span>
 
         <!-- 悬停提示框 -->
-        <div class="tooltip" v-if="activeDay === day">
-          <div class="tooltip-date">{{ formatDate(day) }}</div>
-          <div class="tooltip-hours">{{ getOvertimeHours(day) }} 小时</div>
+        <div class="tooltip" v-if="showTooltipFlag && currentDay === day">
+          <p>日期：{{ yearMonth }}-{{ day.toString().padStart(2, '0') }}</p>
+          <p>加班时长：{{ getOvertimeHours(day) }}h</p>
         </div>
       </div>
     </div>
 
     <!-- 图例 -->
-    <div class="heatmap-legend">
-      <div class="legend-item">
-        <div class="legend-color" :style="{ backgroundColor: '#f7fafc' }"></div>
-        <div class="legend-text">0小时</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" :style="{ backgroundColor: '#b8e986' }"></div>
-        <div class="legend-text">0-3小时</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" :style="{ backgroundColor: '#7ed321' }"></div>
-        <div class="legend-text">3-6小时</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" :style="{ backgroundColor: '#4a90e2' }"></div>
-        <div class="legend-text">6-9小时</div>
-      </div>
-      <div class="legend-item">
-        <div class="legend-color" :style="{ backgroundColor: '#2962ff' }"></div>
-        <div class="legend-text">9小时以上</div>
-      </div>
-    </div>
+<div class="heatmap-legend">
+  <div class="legend-item">
+    <span class="legend-color" :style="{ backgroundColor: '#ebedf0' }"></span>
+    <span class="legend-text">0h</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" :style="{ backgroundColor: '#9be9a8' }"></span>
+    <span class="legend-text">0-3h</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" :style="{ backgroundColor: '#40c463' }"></span>
+    <span class="legend-text">3-6h</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" :style="{ backgroundColor: '#30a14e' }"></span>
+    <span class="legend-text">6-9h</span>
+  </div>
+  <div class="legend-item">
+    <span class="legend-color" :style="{ backgroundColor: '#216e39' }"></span>
+    <span class="legend-text">9h+</span>
+  </div>
+</div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 
-// 接收父组件传递的参数
 const props = defineProps({
   yearMonth: {
     type: String,
     required: true,
-    validator: (value) => {
-      // 验证格式为 YYYY-MM
-      return /^\d{4}-\d{2}$/.test(value)
-    }
+    validator: (val) => /^\d{4}-\d{2}$/.test(val)
   },
   data: {
     type: Object,
-    required: true,
     default: () => ({})
   }
 })
 
-// 解析年月
 const [year, month] = props.yearMonth.split('-').map(Number)
 
-// 计算当月天数
 const monthDays = computed(() => {
-  // 获取当月的总天数
-  const daysInMonth = new Date(year, month, 0).getDate()
-  // 生成1到当月天数的数组
-  return Array.from({ length: daysInMonth }, (_, i) => i + 1)
+  const dayCount = new Date(year, month, 0).getDate()
+  return Array.from({ length: dayCount }, (_, i) => i + 1)
 })
 
-// 计算月初前的空白天数
 const emptyDays = computed(() => {
-  // 获取当月第一天是星期几（0是周日，1是周一，...，6是周六）
-  const firstDayOfWeek = new Date(year, month - 1, 1).getDay()
-
-  // 转换为以周一为一周的第一天计算空白天数
-  // 如果第一天是周日（0），则前面有6个空白；如果是周一（1），则0个空白
-  return firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1
+  const firstDay = new Date(year, month - 1, 1).getDay() // 0 日 1 一 ... 6 六
+  return (firstDay + 6) % 7 // 0->6, 1->0, 2->1 ... 6->5
 })
 
-// 提示框相关状态
-const activeDay = ref(null)
+// 提示框控制
+const showTooltipFlag = ref(false)
+const currentDay = ref(null)
 
 const showTooltip = (day) => {
-  activeDay.value = day
+  showTooltipFlag.value = true
+  currentDay.value = day
 }
 
 const hideTooltip = () => {
-  activeDay.value = null
+  showTooltipFlag.value = false
+  currentDay.value = null
 }
 
-// 获取指定日期的加班小时数
+// 获取某天的加班小时数
 const getOvertimeHours = (day) => {
-  // 格式化日期为 YYYY-MM-DD
-  const dateStr = `${props.yearMonth}-${String(day).padStart(2, '0')}`
-  // 返回对应的加班小时数，默认为0
-  return props.data[dateStr] || 0
+  const dateKey = `${props.yearMonth}-${day.toString().padStart(2, '0')}`
+  return props.data[dateKey] || 0
 }
 
-// 获取单元格颜色
+// 根据小时数获取单元格颜色
 const getCellColor = (day) => {
   const hours = getOvertimeHours(day)
-
-  // 根据加班小时数返回不同颜色
-  if (hours === 0) return '#f7fafc'
-  if (hours <= 3) return '#b8e986'
-  if (hours <= 6) return '#7ed321'
-  if (hours <= 9) return '#4a90e2'
-  return '#2962ff'
-}
-
-// 格式化日期显示
-const formatDate = (day) => {
-  return `${props.yearMonth}-${String(day).padStart(2, '0')}`
+  if (hours === 0) return '#ebedf0'
+  if (hours <= 3) return '#9be9a8'
+  if (hours <= 6) return '#40c463'
+  if (hours <= 9) return '#30a14e'
+  return '#216e39'
 }
 </script>
 
 <style scoped>
-.heatmap-container {
+.heatmap {
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
   margin: 0 auto;
 }
 
-/* 星期标题样式 */
-.weekdays {
+/* 星期表头 */
+.heatmap-header {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   margin-bottom: 8px;
 }
 
-.weekday {
+.header-item {
   text-align: center;
   font-size: 12px;
   color: #666;
+  font-weight: 500;
   padding: 4px 0;
 }
 
-/* 热力图网格样式 */
+/* 热力图网格 */
 .heatmap-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 6px;
 }
 
-/* 单元格样式 */
+/* 单元格：圆润正方形 */
 .heatmap-cell {
-  aspect-ratio: 1 / 1;
-  border-radius: 4px;
+  aspect-ratio: 1/1;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 12px;
+  color: #333;
   position: relative;
   cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.heatmap-cell:hover {
-  transform: scale(1.05);
+  border: 1px solid #eee;
 }
 
 .heatmap-cell.empty {
@@ -189,58 +172,47 @@ const formatDate = (day) => {
   cursor: default;
 }
 
-.heatmap-cell.empty:hover {
-  transform: none;
-}
-
 .day-number {
   z-index: 1;
-  color: #333;
-  font-weight: 500;
+  font-size: 15px;
 }
 
-/* 提示框样式 */
+/* 悬停提示框 */
 .tooltip {
   position: absolute;
-  bottom: 100%;
+  top: -50px;            /* 上移，高度减少 */
   left: 50%;
-  transform: translateX(-50%) translateY(-5px);
-  background-color: #333;
-  color: white;
-  padding: 6px 10px;
-  border-radius: 4px;
-  font-size: 12px;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.75);  /* 半透明黑色 */
+  color: #fff;
+  padding: 4px 8px;      /* 缩小内边距 */
+  border-radius: 15px;
+  font-size: 12px;       /* 更小字号 */
+  line-height: 1.2;
   white-space: nowrap;
   z-index: 10;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); /* 轻量阴影 */
+  pointer-events: none;
 }
 
-/* 提示框箭头 */
 .tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;
+  top: 100%;                    /* 移到提示框底部 */
   left: 50%;
   transform: translateX(-50%);
-  border-width: 5px;
+  border-width: 6px 6px 0;      /* 向下三角形 */
   border-style: solid;
-  border-color: #333 transparent transparent transparent;
+  border-color: rgba(0,0,0,0.75) transparent transparent;
 }
 
-.tooltip-date {
-  font-weight: bold;
-  margin-bottom: 3px;
-}
-
-/* 图例样式 */
+/* 图例 */
 .heatmap-legend {
   display: flex;
   justify-content: center;
-  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 15px;
-  padding-top: 10px;
 }
 
 .legend-item {
@@ -251,24 +223,21 @@ const formatDate = (day) => {
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  margin-right: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 15px;
+  margin-right: 6px;
+  border: 1px solid #eee;
 }
 
 /* 响应式调整 */
-@media (max-width: 480px) {
-  .heatmap-grid {
-    gap: 4px;
-  }
-
-  .day-number {
-    font-size: 10px;
+@media (max-width: 640px) {
+  .heatmap-legend {
+    gap: 10px;
   }
 
   .legend-item {
-    font-size: 10px;
+    font-size: 11px;
   }
 }
 </style>
