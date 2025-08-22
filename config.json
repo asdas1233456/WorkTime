@@ -3,7 +3,7 @@
     "work_start": "09:00",
     "work_end": "18:00",
     "lunch_break_minutes": 90,
-    "required_overtime_hours_monthly": 10
+    "required_overtime_hours_monthly": 70
   },
   "ai": {
     "api_base": "https://api.siliconflow.cn/v1",

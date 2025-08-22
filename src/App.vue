@@ -1,14 +1,14 @@
 <template>
   <div class="dashboard">
-    <!-- 1. 顶部标题区 -->
+    <!-- 顶部标题区 -->
     <header class="dashboard-header">
       <h1>2025 年 8 月加班看板</h1>
       <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
     </header>
 
-    <!-- 2. 核心内容区（分2块：概览 + 记录） -->
+    <!-- 核心内容区 -->
     <main class="dashboard-main">
-      <!-- 2.1 左侧：加班概览（用你的「加班计划.json」字段） -->
+      <!-- 左侧：加班概览和热力图 -->
       <div class="card overview-card">
         <h2>加班概览</h2>
         <div class="overview-list">
@@ -34,6 +34,15 @@
           </div>
         </div>
 
+        <!-- 热力图区域 -->
+        <div class="heatmap-section">
+          <h3>8月加班热力图</h3>
+          <MonthlyHeatmap
+            year-month="2025-08"
+            :data="heatmapData"
+          />
+        </div>
+
         <!-- 假期信息 -->
         <div class="holiday-info">
           <h3>假期提醒</h3>
@@ -43,81 +52,99 @@
         </div>
       </div>
 
-      <!-- 2.2 右侧：加班记录（用你的「overtime_report.json」字段） -->
-      <div class="card records-card">
-        <h2>加班记录详情</h2>
-        <div class="records-table">
-          <!-- 表头 -->
-          <div class="table-header">
-            <div class="table-cell">日期</div>
-            <div class="table-cell">类型</div>
-            <div class="table-cell">开始时间</div>
-            <div class="table-cell">结束时间</div>
-            <div class="table-cell">加班时长</div>
-          </div>
-          <!-- 表体（循环你的记录数据） -->
-          <div
-            class="table-row"
-            v-for="(record, index) in reportData"
-            :key="index"
-          >
-            <div class="table-cell">{{ record.date }}</div>
-            <div class="table-cell">
-              <span :class="record.is_workday ? 'workday-tag' : 'weekend-tag'">
-                {{ record.is_workday ? '工作日' : '周末' }}
-              </span>
+      <!-- 右侧：加班记录和AI建议 -->
+      <div class="right-column">
+        <!-- 加班记录 -->
+        <div class="card records-card">
+          <h2>加班记录详情</h2>
+          <div class="records-table">
+            <div class="table-header">
+              <div class="table-cell">日期</div>
+              <div class="table-cell">类型</div>
+              <div class="table-cell">开始时间</div>
+              <div class="table-cell">结束时间</div>
+              <div class="table-cell">加班时长</div>
             </div>
-            <div class="table-cell">{{ record.actual_start }}</div>
-            <div class="table-cell">{{ record.actual_end }}</div>
-            <div class="table-cell">{{ record.overtime_hours }}h</div>
+            <div
+              class="table-row"
+              v-for="(record, index) in reportData"
+              :key="index"
+            >
+              <div class="table-cell">{{ record.date }}</div>
+              <div class="table-cell">
+                <span :class="record.is_workday ? 'workday-tag' : 'weekend-tag'">
+                  {{ record.is_workday ? '工作日' : '周末' }}
+                </span>
+              </div>
+              <div class="table-cell">{{ record.actual_start }}</div>
+              <div class="table-cell">{{ record.actual_end }}</div>
+              <div class="table-cell">{{ record.overtime_hours }}h</div>
+            </div>
           </div>
+        </div>
+
+        <!-- AI建议 -->
+        <div class="card advice-card">
+          <h2>AI 建议</h2>
+          <div class="advice-content" v-html="formattedAdvice"></div>
         </div>
       </div>
     </main>
 
-    <!-- 3. 底部建议区（用你的 AI 建议） -->
+    <!-- 页脚 -->
     <footer class="dashboard-footer">
-      <div class="advice-card">
-        <h2>AI 建议</h2>
-        <div class="advice-content" v-html="formattedAdvice"></div>
-      </div>
+      <p>© 2025 加班管理看板 | 数据仅供参考</p>
     </footer>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import MonthlyHeatmap from './components/MonthlyHeatmap.vue'
+import planData from '../data/加班计划.json'
+import reportData from '../data/overtime_report.json'
 
-// 1. 导入你的两个 JSON 文件（路径必须和结构一致！）
-import planData from '../data/加班计划.json' // 你的加班计划
-import reportData from '../data/overtime_report.json' // 你的加班记录
-
-// 2. 格式化 AI 建议（处理换行和加粗）
-const formattedAdvice = computed(() => {
-  // 把 JSON 里的 \n 换成 <br>，**加粗**换成 <strong>
-  return planData.advice
-    ? planData.advice.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    : '暂无建议'
+// 转换加班记录数据为热力图所需格式
+const heatmapData = computed(() => {
+  const data = {}
+  reportData.forEach(record => {
+    // 确保日期格式正确
+    const date = record.date.trim()
+    // 确保加班小时数为数字类型
+    data[date] = Number(record.overtime_hours)
+  })
+  return data
 })
 
-// 3. 调试用：确认数据已加载（打开控制台看）
+// 格式化AI建议内容
+const formattedAdvice = computed(() => {
+  if (!planData.advice) return '暂无建议'
+
+  // 处理换行和加粗格式
+  return planData.advice
+    .replace(/\n/g, '<br>')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+})
+
+// 调试信息
 onMounted(() => {
-  console.log('✅ 加班计划数据加载成功：', planData)
-  console.log('✅ 加班记录数据加载成功：', reportData)
+  console.log('加班计划数据:', planData)
+  console.log('加班记录数据:', reportData)
+  console.log('热力图数据:', heatmapData.value)
 })
 </script>
 
 <style scoped>
-/* 基础样式：保证看得清，后续可优化 */
 .dashboard {
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  font-family: sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   background-color: #f5f5f5;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-/* 顶部标题 */
 .dashboard-header {
   text-align: center;
   padding: 20px;
@@ -138,7 +165,6 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 核心内容区：左右分栏 */
 .dashboard-main {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
@@ -146,7 +172,12 @@ onMounted(() => {
   margin-bottom: 20px;
 }
 
-/* 卡片通用样式 */
+.right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
 .card {
   background: white;
   border-radius: 8px;
@@ -162,7 +193,6 @@ onMounted(() => {
   font-size: 18px;
 }
 
-/* 左侧概览卡片 */
 .overview-list {
   display: flex;
   flex-direction: column;
@@ -186,10 +216,22 @@ onMounted(() => {
   color: #333;
 }
 
-/* 假期信息 */
+.heatmap-section {
+  padding: 20px 0;
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  margin: 20px 0;
+}
+
+.heatmap-section h3 {
+  margin: 0 0 15px;
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+}
+
 .holiday-info {
   padding-top: 20px;
-  border-top: 1px solid #eee;
 }
 
 .holiday-info h3 {
@@ -202,12 +244,13 @@ onMounted(() => {
   margin: 5px 0;
   color: #666;
   font-size: 14px;
+  line-height: 1.6;
 }
 
-/* 右侧记录表格 */
 .records-table {
   width: 100%;
   border-collapse: collapse;
+  overflow: hidden;
 }
 
 .table-header {
@@ -222,6 +265,11 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 120px 80px 100px 100px 100px;
   border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+}
+
+.table-row:hover {
+  background-color: #f9f9f9;
 }
 
 .table-cell {
@@ -229,7 +277,6 @@ onMounted(() => {
   font-size: 14px;
 }
 
-/* 工作日/周末标签 */
 .workday-tag {
   display: inline-block;
   padding: 3px 8px;
@@ -248,20 +295,6 @@ onMounted(() => {
   font-size: 12px;
 }
 
-/* 底部建议区 */
-.advice-card {
-  background: white;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.advice-card h2 {
-  margin: 0 0 15px;
-  font-size: 18px;
-  color: #333;
-}
-
 .advice-content {
   color: #666;
   line-height: 1.6;
@@ -272,10 +305,28 @@ onMounted(() => {
   color: #333;
 }
 
-/* 响应式：小屏幕不分栏 */
+.dashboard-footer {
+  text-align: center;
+  padding: 15px;
+  color: #666;
+  font-size: 13px;
+  border-top: 1px solid #eee;
+  margin-top: 20px;
+}
+
+/* 响应式调整 */
 @media (max-width: 768px) {
   .dashboard-main {
     grid-template-columns: 1fr;
+  }
+
+  .table-header, .table-row {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .table-cell {
+    font-size: 12px;
+    padding: 8px 4px;
   }
 }
 </style>
