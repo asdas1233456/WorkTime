@@ -15,15 +15,27 @@ def _calc_overtime(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     we = dt.datetime.strptime(cfg["office"]["work_end"], "%H:%M")
 
     df = df.copy()
-    df["_start_dt"] = pd.to_datetime(df["actual_start"], format="%H:%M")
-    df["_end_dt"] = pd.to_datetime(df["actual_end"], format="%H:%M")
 
+    # 转成时间列
+    df["_start_dt"] = pd.to_datetime(df["actual_start"], format="%H:%M")
+    df["_end_dt"]   = pd.to_datetime(df["actual_end"],   format="%H:%M")
+
+    # 跨天修正
     cross = df["_end_dt"] < df["_start_dt"]
     df.loc[cross, "_end_dt"] += pd.Timedelta(days=1)
+
+    # 工作日标记
     df["is_workday"] = df["date"].dt.date.map(cc.is_workday)
 
+    # 只对「工作日 9:00-9:10」做迟到宽容：统一视为 9:00 打卡
+    mask_9 = (df["is_workday"]) & \
+             (df["_start_dt"].dt.hour == 9) & \
+             (df["_start_dt"].dt.minute <= 10)
+    df.loc[mask_9, "_start_dt"] = df.loc[mask_9, "_start_dt"].dt.floor("h")
+
+    # 计算加班
     early_ot = (ws - df["_start_dt"]).clip(lower=pd.Timedelta(0)).dt.total_seconds() / 3600
-    late_ot = (df["_end_dt"] - we).clip(lower=pd.Timedelta(0)).dt.total_seconds() / 3600
+    late_ot  = (df["_end_dt"] - we).clip(lower=pd.Timedelta(0)).dt.total_seconds() / 3600
     workday_ot = early_ot + late_ot
 
     full_dur = (df["_end_dt"] - df["_start_dt"]).dt.total_seconds() / 3600
@@ -31,7 +43,6 @@ def _calc_overtime(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
 
     df["overtime_hours"] = np.where(df["is_workday"], workday_ot, non_workday_ot).round(2)
     return df.drop(columns=["_start_dt", "_end_dt"])
-
 # ---------- 异常标记 ----------
 def build_anomaly_flags(df: pd.DataFrame, cfg: dict) -> pd.DataFrame:
     work_start = dt.datetime.strptime(cfg["office"]["work_start"], "%H:%M")
