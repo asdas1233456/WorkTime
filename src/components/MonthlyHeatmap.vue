@@ -116,11 +116,11 @@ const getOvertimeHours = (day) => {
 // 根据小时数获取单元格颜色
 const getCellColor = (day) => {
   const hours = getOvertimeHours(day)
-  if (hours === 0) return '#ebedf0'
-  if (hours <= 3) return '#9be9a8'
-  if (hours <= 6) return '#40c463'
-  if (hours <= 9) return '#30a14e'
-  return '#216e39'
+  if (hours === 0) return '#f7fafc'
+  if (hours <= 3) return '#b8e986'
+  if (hours <= 6) return '#7ed321'
+  if (hours <= 9) return '#4a90e2'
+  return '#2962ff'
 }
 </script>
 
@@ -156,7 +156,7 @@ const getCellColor = (day) => {
 /* 单元格样式 */
 .heatmap-cell {
   aspect-ratio: 1/1;
-  border-radius: 15px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,28 +172,25 @@ const getCellColor = (day) => {
   cursor: default;
 }
 
-/* 日期数字大小 */
 .day-number {
-  font-size: 14px;   /* 想要的字号，按需调整 */
-  font-weight: 400;  /* 可选：让字重更细或更粗 */
+  z-index: 1;
 }
 
 /* 悬停提示框 */
 .tooltip {
   position: absolute;
-  top: -50px;            /* 上移，高度减少 */
+  top: -80px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.75);  /* 半透明黑色 */
-  color: #fff;
-  padding: 4px 8px;      /* 缩小内边距 */
-  border-radius: 15px;
-  font-size: 12px;       /* 更小字号 */
-  line-height: 1.2;
-  white-space: nowrap;
+  background-color: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  line-height: 1.4;
   z-index: 10;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25); /* 轻量阴影 */
-  pointer-events: none;
+  min-width: 120px;
+  text-align: center;
 }
 
 .tooltip::after {
@@ -226,7 +223,7 @@ const getCellColor = (day) => {
 .legend-color {
   width: 14px;
   height: 14px;
-  border-radius: 15px;
+  border-radius: 2px;
   margin-right: 6px;
   border: 1px solid #eee;
 }

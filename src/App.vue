@@ -2,41 +2,23 @@
   <div class="dashboard">
     <!-- 顶部标题栏 -->
     <header class="dashboard-header">
-      <h1>2025年8月加班看板</h1>
+      <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
       <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
     </header>
 
-    <!-- 核心三栏布局（左固定+中统计+右热力图） -->
+    <!-- 核心三栏布局（无改动） -->
     <main class="dashboard-content">
-      <!-- 左侧边栏：概览+假期提醒 -->
+      <!-- 左侧边栏 -->
       <aside class="sidebar">
         <div class="sidebar-card">
           <h3>加班概览</h3>
           <ul class="overview-list">
-            <li>
-              <span class="label">当前阶段：</span>
-              <span class="value">{{ planData.阶段 }}</span>
-            </li>
-            <li>
-              <span class="label">已加班小时数：</span>
-              <span class="value">{{ planData.已加班小时数 }}h</span>
-            </li>
-            <li>
-              <span class="label">剩余需加班：</span>
-              <span class="value">{{ planData.剩余需加班 }}h</span>
-            </li>
-            <li>
-              <span class="label">剩余工作日：</span>
-              <span class="value">{{ planData.剩余工作日 }}天</span>
-            </li>
-            <li>
-              <span class="label">含周六：</span>
-              <span class="value">{{ planData.周六剩余 }}个</span>
-            </li>
-            <li>
-              <span class="label">每日目标：</span>
-              <span class="value">{{ planData["每日目标(h)"] }}h</span>
-            </li>
+            <li><span class="label">当前阶段：</span><span class="value">{{ planData.阶段 }}</span></li>
+            <li><span class="label">已加班小时数：</span><span class="value">{{ planData.已加班小时数 }}h</span></li>
+            <li><span class="label">剩余需加班：</span><span class="value">{{ planData.剩余需加班 }}h</span></li>
+            <li><span class="label">剩余工作日：</span><span class="value">{{ planData.剩余工作日 }}天</span></li>
+            <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}个</span></li>
+            <li><span class="label">每日目标：</span><span class="value">{{ planData["每日目标(h)"] }}h</span></li>
           </ul>
         </div>
 
@@ -48,9 +30,8 @@
         </div>
       </aside>
 
-      <!-- 中间区域：统计+加班记录+AI建议 -->
+      <!-- 中间区域 -->
       <div class="middle-area">
-        <!-- 统计摘要 -->
         <div class="stats-container">
           <div class="stat-item">
             <span class="stat-label">总记录数</span>
@@ -66,29 +47,18 @@
           </div>
         </div>
 
-        <!-- 加班记录（原生滚动，无额外依赖） -->
         <div class="card records-card">
-          <h2>加班记录详情</h2>
-          <div
-            class="records-list"
-            :style="{
-              maxHeight: reportData.length > 5 ? '320px' : 'auto',
-              overflowY: reportData.length > 5 ? 'auto' : 'visible'
-            }"
-          >
-            <!-- 表头 -->
+          <h2>{{ currentMonth.slice(5) }}月加班记录详情</h2>
+          <div class="records-list"
+               :style="{ maxHeight: reportData.length > 5 ? '320px' : 'auto',
+                         overflowY: reportData.length > 5 ? 'auto' : 'visible' }">
             <div class="list-header">
               <div class="list-col">日期</div>
               <div class="list-col">类型</div>
               <div class="list-col">时间段</div>
               <div class="list-col">时长</div>
             </div>
-            <!-- 记录内容 -->
-            <div
-              class="list-row"
-              v-for="(record, index) in reportData"
-              :key="index"
-            >
+            <div class="list-row" v-for="(record, index) in currentMonthRecords" :key="index">
               <div class="list-col">{{ record.date }}</div>
               <div class="list-col">
                 <span :class="record.is_workday ? 'tag workday' : 'tag weekend'">
@@ -101,19 +71,27 @@
           </div>
         </div>
 
-        <!-- AI建议 -->
         <div class="card advice-card">
           <h2>AI建议</h2>
           <div class="advice-content" v-html="formattedAdvice"></div>
         </div>
       </div>
 
-      <!-- 右侧区域：热力图 -->
+      <!-- 右侧热力图 -->
       <div class="right-area">
         <div class="card heatmap-card">
-          <h2>8月加班热力图</h2>
+          <h2>{{ currentMonth.slice(5) }}月加班热力图</h2>
+
+<!--          &lt;!&ndash; 月份选择器 &ndash;&gt;-->
+<!--          <select v-model="currentMonth" style="margin-bottom:8px;">-->
+<!--            <option v-for="m in 12" :key="m"-->
+<!--                    :value="`2025-${m.toString().padStart(2,'0')}`">-->
+<!--              2025-{{ m.toString().padStart(2,'0') }}-->
+<!--            </option>-->
+<!--          </select>-->
+
           <MonthlyHeatmap
-            year-month="2025-08"
+            :year-month="currentMonth"
             :data="heatmapData"
           />
         </div>
@@ -123,49 +101,47 @@
 </template>
 
 <script setup>
-// 仅依赖Vue核心，无额外第三方库
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import MonthlyHeatmap from './components/MonthlyHeatmap.vue'
-// 原数据文件（路径不变）
 import planData from '../data/加班计划.json'
 import reportData from '../data/overtime_report.json'
 
-// 热力图数据转换（原逻辑不变）
+// 当前月份（动态）
+const currentMonth = ref('2025-08')
+
+// 当月记录过滤
+const currentMonthRecords = computed(() =>
+  reportData.filter(r => r.date.startsWith(currentMonth.value))
+)
+
+// 热力图数据
 const heatmapData = computed(() => {
   const data = {}
-  reportData.forEach(record => {
-    const date = record.date.trim()
-    data[date] = Number(record.overtime_hours)
+  currentMonthRecords.value.forEach(r => {
+    data[r.date] = Number(r.overtime_hours)
   })
   return data
 })
 
-// 统计计算（原逻辑不变）
+// 统计值仅针对当前月
 const maxOvertimeHours = computed(() => {
-  if (!Array.isArray(reportData) || reportData.length === 0) return '0.00'
-  return Math.max(...reportData.map(r => Number(r.overtime_hours))).toFixed(2)
+  if (!currentMonthRecords.value.length) return '0.00'
+  return Math.max(...currentMonthRecords.value.map(r => Number(r.overtime_hours))).toFixed(2)
 })
-
 const averageOvertime = computed(() => {
-  if (!Array.isArray(reportData) || reportData.length === 0) return '0.00'
-  const total = reportData.reduce((sum, r) => sum + Number(r.overtime_hours), 0)
-  return (total / reportData.length).toFixed(2)
+  if (!currentMonthRecords.value.length) return '0.00'
+  const total = currentMonthRecords.value.reduce((s, r) => s + Number(r.overtime_hours), 0)
+  return (total / currentMonthRecords.value.length).toFixed(2)
 })
 
-// AI建议格式化（原逻辑不变）
-const formattedAdvice = computed(() => {
-  return planData.advice
+// AI 建议
+const formattedAdvice = computed(() =>
+  planData.advice
     ? planData.advice.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     : '暂无加班建议，可根据剩余工作日合理安排时长~'
-})
-
-// 调试数据加载（原逻辑不变）
-onMounted(() => {
-  console.log('加班计划数据:', planData)
-  console.log('加班记录数据:', reportData)
-  console.log('热力图数据:', heatmapData.value)
-})
+)
 </script>
+
 
 <style scoped>
 /* 全局基础样式 */
@@ -183,6 +159,15 @@ onMounted(() => {
   background-color: #f5f7fa;
   color: #333;
 }
+
+/* 加班记录 */
+.records-card {
+  height: 437px;          /* 固定高度 */
+  /* 或 max-height: 480px; 让内容少时自动收缩 */
+  display: flex;
+  flex-direction: column;
+}
+
 
 /* 顶部标题栏 */
 .dashboard-header {
@@ -205,23 +190,15 @@ onMounted(() => {
   color: #6b7280;
 }
 
-/* 方案 A：直接给卡片设高 */
-.records-card {
-  height: 436.5px;          /* 固定高度 */
-  /* 或 max-height: 480px; 让内容少时自动收缩 */
-  display: flex;
-  flex-direction: column;
-}
-
 /* 核心三栏布局 */
 .dashboard-content {
   display: grid;
-  grid-template-columns: 280px 1fr 1fr;
+  grid-template-columns: 280px 1fr 1fr; /* 左280px固定，中右自适应 */
   gap: 20px;
-  align-items: stretch;   /* 关键：三栏强制等高 */
+  align-items: stretch;
 }
 
-/* 2️⃣ 左侧 & 中间区域纵向撑满 */
+/* 左侧边栏 */
 .sidebar,
 .middle-area {
   display: flex;
@@ -233,7 +210,7 @@ onMounted(() => {
 .sidebar-card {
   background: white;
   border-radius: 8px;
-  padding: 19.4px;
+  padding: 18px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -241,7 +218,7 @@ onMounted(() => {
   margin: 0 0 16px;
   font-size: 16px;
   color: #1e293b;
-  padding-bottom: 8px;
+  padding-bottom: 10px;
   border-bottom: 1px solid #f1f5f9;
 }
 
