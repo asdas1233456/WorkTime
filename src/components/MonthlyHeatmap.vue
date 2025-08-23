@@ -14,14 +14,9 @@
     <!-- 热力图网格 -->
     <div class="heatmap-grid">
       <!-- 月初空白占位 -->
-      <div
-        class="heatmap-cell empty"
-        v-for="(_, idx) in emptyDays"
-        :key="`empty-${idx}`"
-      ></div>
+      <div class="heatmap-cell empty" v-for="(empty, idx) in emptyDays" :key="`empty-${idx}`"></div>
 
       <!-- 日期单元格 -->
-
       <div
         class="heatmap-cell"
         v-for="(day, idx) in monthDays"
@@ -40,35 +35,36 @@
       </div>
     </div>
 
-    <!-- 图例 -->
-<div class="heatmap-legend">
-  <div class="legend-item">
-    <span class="legend-color" :style="{ backgroundColor: '#ebedf0' }"></span>
-    <span class="legend-text">0h</span>
-  </div>
-  <div class="legend-item">
-    <span class="legend-color" :style="{ backgroundColor: '#9be9a8' }"></span>
-    <span class="legend-text">0-3h</span>
-  </div>
-  <div class="legend-item">
-    <span class="legend-color" :style="{ backgroundColor: '#40c463' }"></span>
-    <span class="legend-text">3-6h</span>
-  </div>
-  <div class="legend-item">
-    <span class="legend-color" :style="{ backgroundColor: '#30a14e' }"></span>
-    <span class="legend-text">6-9h</span>
-  </div>
-  <div class="legend-item">
-    <span class="legend-color" :style="{ backgroundColor: '#216e39' }"></span>
-    <span class="legend-text">9h+</span>
-  </div>
-</div>
+    <!-- 图例说明 -->
+    <div class="heatmap-legend">
+      <div class="legend-item">
+        <span class="legend-color" :style="{ backgroundColor: '#f7fafc' }"></span>
+        <span class="legend-text">0h</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color" :style="{ backgroundColor: '#b8e986' }"></span>
+        <span class="legend-text">0-3h</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color" :style="{ backgroundColor: '#7ed321' }"></span>
+        <span class="legend-text">3-6h</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color" :style="{ backgroundColor: '#4a90e2' }"></span>
+        <span class="legend-text">6-9h</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-color" :style="{ backgroundColor: '#2962ff' }"></span>
+        <span class="legend-text">9h+</span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 
+// 接收父组件参数
 const props = defineProps({
   yearMonth: {
     type: String,
@@ -77,20 +73,24 @@ const props = defineProps({
   },
   data: {
     type: Object,
+    required: true,
     default: () => ({})
   }
 })
 
+// 解析年月
 const [year, month] = props.yearMonth.split('-').map(Number)
 
+// 计算当月天数
 const monthDays = computed(() => {
   const dayCount = new Date(year, month, 0).getDate()
   return Array.from({ length: dayCount }, (_, i) => i + 1)
 })
 
+// 计算月初空白天数
 const emptyDays = computed(() => {
-  const firstDay = new Date(year, month - 1, 1).getDay() // 0 日 1 一 ... 6 六
-  return (firstDay + 6) % 7 // 0->6, 1->0, 2->1 ... 6->5
+  const firstDay = new Date(year, month - 1, 1).getDay()
+  return firstDay === 0 ? 6 : firstDay - 1
 })
 
 // 提示框控制
@@ -153,10 +153,10 @@ const getCellColor = (day) => {
   gap: 6px;
 }
 
-/* 单元格：圆润正方形 */
+/* 单元格样式 */
 .heatmap-cell {
   aspect-ratio: 1/1;
-  border-radius: 20px;
+  border-radius: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -172,9 +172,10 @@ const getCellColor = (day) => {
   cursor: default;
 }
 
+/* 日期数字大小 */
 .day-number {
-  z-index: 1;
-  font-size: 15px;
+  font-size: 14px;   /* 想要的字号，按需调整 */
+  font-weight: 400;  /* 可选：让字重更细或更粗 */
 }
 
 /* 悬停提示框 */
@@ -198,12 +199,12 @@ const getCellColor = (day) => {
 .tooltip::after {
   content: '';
   position: absolute;
-  top: 100%;                    /* 移到提示框底部 */
+  bottom: -6px;
   left: 50%;
   transform: translateX(-50%);
-  border-width: 6px 6px 0;      /* 向下三角形 */
+  border-width: 6px 6px 0;
   border-style: solid;
-  border-color: rgba(0,0,0,0.75) transparent transparent;
+  border-color: #333 transparent transparent;
 }
 
 /* 图例 */
