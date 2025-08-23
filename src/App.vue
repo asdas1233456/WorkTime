@@ -2,26 +2,46 @@
   <div class="dashboard">
     <!-- 顶部标题栏 -->
     <header class="dashboard-header">
-      <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
+      <h1>2025年8月加班看板</h1>
       <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
     </header>
 
-    <!-- 核心三栏布局（无改动） -->
+    <!-- 主要内容区 -->
     <main class="dashboard-content">
-      <!-- 左侧边栏 -->
+      <!-- 左侧边栏：概览和假期 -->
       <aside class="sidebar">
+        <!-- 加班概览卡片 -->
         <div class="sidebar-card">
           <h3>加班概览</h3>
           <ul class="overview-list">
-            <li><span class="label">当前阶段：</span><span class="value">{{ planData.阶段 }}</span></li>
-            <li><span class="label">已加班小时数：</span><span class="value">{{ planData.已加班小时数 }}h</span></li>
-            <li><span class="label">剩余需加班：</span><span class="value">{{ planData.剩余需加班 }}h</span></li>
-            <li><span class="label">剩余工作日：</span><span class="value">{{ planData.剩余工作日 }}天</span></li>
-            <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}个</span></li>
-            <li><span class="label">每日目标：</span><span class="value">{{ planData["每日目标(h)"] }}h</span></li>
+            <li>
+              <span class="label">当前阶段：</span>
+              <span class="value">{{ planData.阶段 }}</span>
+            </li>
+            <li>
+              <span class="label">已加班小时数：</span>
+              <span class="value">{{ planData.已加班小时数 }}h</span>
+            </li>
+            <li>
+              <span class="label">剩余需加班：</span>
+              <span class="value">{{ planData.剩余需加班 }}h</span>
+            </li>
+            <li>
+              <span class="label">剩余工作日：</span>
+              <span class="value">{{ planData.剩余工作日 }}天</span>
+            </li>
+            <li>
+              <span class="label">含周六：</span>
+              <span class="value">{{ planData.周六剩余 }}个</span>
+            </li>
+            <li>
+              <span class="label">每日目标：</span>
+              <span class="value">{{ planData["每日目标(h)"] }}h</span>
+            </li>
           </ul>
         </div>
 
+        <!-- 假期提醒卡片 -->
         <div class="sidebar-card holiday-card">
           <h3>假期提醒</h3>
           <p>{{ planData.this_month_holiday }}</p>
@@ -30,8 +50,18 @@
         </div>
       </aside>
 
-      <!-- 中间区域 -->
-      <div class="middle-area">
+      <!-- 右侧主内容：热力图和记录 -->
+      <div class="main-area">
+        <!-- 热力图区域 -->
+        <div class="card heatmap-card">
+          <h2>8月加班热力图</h2>
+          <MonthlyHeatmap
+            year-month="2025-08"
+            :data="heatmapData"
+          />
+        </div>
+
+        <!-- 统计摘要 -->
         <div class="stats-container">
           <div class="stat-item">
             <span class="stat-label">总记录数</span>
@@ -47,18 +77,30 @@
           </div>
         </div>
 
+        <!-- 加班记录列表（带滚动） -->
         <div class="card records-card">
-          <h2>{{ currentMonth.slice(5) }}月加班记录详情</h2>
-          <div class="records-list"
-               :style="{ maxHeight: reportData.length > 5 ? '320px' : 'auto',
-                         overflowY: reportData.length > 5 ? 'auto' : 'visible' }">
+          <h2>加班记录详情</h2>
+          <div
+            class="records-list"
+            :style="{
+              maxHeight: shouldShowScroll ? '320px' : 'auto',
+              overflowY: shouldShowScroll ? 'auto' : 'visible'
+            }"
+          >
+            <!-- 表头 -->
             <div class="list-header">
               <div class="list-col">日期</div>
               <div class="list-col">类型</div>
               <div class="list-col">时间段</div>
               <div class="list-col">时长</div>
             </div>
-            <div class="list-row" v-for="(record, index) in currentMonthRecords" :key="index">
+
+            <!-- 记录内容 -->
+            <div
+              class="list-row"
+              v-for="(record, index) in reportData"
+              :key="index"
+            >
               <div class="list-col">{{ record.date }}</div>
               <div class="list-col">
                 <span :class="record.is_workday ? 'tag workday' : 'tag weekend'">
@@ -71,29 +113,10 @@
           </div>
         </div>
 
+        <!-- AI建议区域 -->
         <div class="card advice-card">
           <h2>AI建议</h2>
           <div class="advice-content" v-html="formattedAdvice"></div>
-        </div>
-      </div>
-
-      <!-- 右侧热力图 -->
-      <div class="right-area">
-        <div class="card heatmap-card">
-          <h2>{{ currentMonth.slice(5) }}月加班热力图</h2>
-
-<!--          &lt;!&ndash; 月份选择器 &ndash;&gt;-->
-<!--          <select v-model="currentMonth" style="margin-bottom:8px;">-->
-<!--            <option v-for="m in 12" :key="m"-->
-<!--                    :value="`2025-${m.toString().padStart(2,'0')}`">-->
-<!--              2025-{{ m.toString().padStart(2,'0') }}-->
-<!--            </option>-->
-<!--          </select>-->
-
-          <MonthlyHeatmap
-            :year-month="currentMonth"
-            :data="heatmapData"
-          />
         </div>
       </div>
     </main>
@@ -101,58 +124,57 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import MonthlyHeatmap from './components/MonthlyHeatmap.vue'
 import planData from '../data/加班计划.json'
 import reportData from '../data/overtime_report.json'
 
-// 当前月份（动态）
-const currentMonth = ref('2025-08')
-
-// 当月记录过滤
-const currentMonthRecords = computed(() =>
-  reportData.filter(r => r.date.startsWith(currentMonth.value))
-)
-
-// 热力图数据
+// 转换加班记录数据为热力图所需格式
 const heatmapData = computed(() => {
   const data = {}
-  currentMonthRecords.value.forEach(r => {
-    data[r.date] = Number(r.overtime_hours)
+  reportData.forEach(record => {
+    const date = record.date.trim()
+    data[date] = Number(record.overtime_hours)
   })
   return data
 })
 
-// 统计值仅针对当前月
-const maxOvertimeHours = computed(() => {
-  if (!currentMonthRecords.value.length) return '0.00'
-  return Math.max(...currentMonthRecords.value.map(r => Number(r.overtime_hours))).toFixed(2)
-})
-const averageOvertime = computed(() => {
-  if (!currentMonthRecords.value.length) return '0.00'
-  const total = currentMonthRecords.value.reduce((s, r) => s + Number(r.overtime_hours), 0)
-  return (total / currentMonthRecords.value.length).toFixed(2)
+// 计算是否需要显示滚动条（记录数 > 5 时）
+const shouldShowScroll = computed(() => {
+  return Array.isArray(reportData) && reportData.length > 5
 })
 
-// AI 建议
-const formattedAdvice = computed(() =>
-  planData.advice
+// 统计数据计算
+const maxOvertimeHours = computed(() => {
+  if (!Array.isArray(reportData) || reportData.length === 0) return '0'
+  return Math.max(...reportData.map(r => r.overtime_hours)).toFixed(2)
+})
+
+const averageOvertime = computed(() => {
+  if (!Array.isArray(reportData) || reportData.length === 0) return '0'
+  const total = reportData.reduce((sum, r) => sum + Number(r.overtime_hours), 0)
+  return (total / reportData.length).toFixed(2)
+})
+
+// 格式化AI建议
+const formattedAdvice = computed(() => {
+  return planData.advice
     ? planData.advice.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    : '暂无加班建议，可根据剩余工作日合理安排时长~'
-)
+    : '暂无建议'
+})
+
+// 组件挂载时验证数据
+onMounted(() => {
+  console.log('加班计划数据:', planData)
+  console.log('加班记录数据:', reportData)
+  console.log('热力图数据:', heatmapData.value)
+})
 </script>
 
-
 <style scoped>
-/* 全局基础样式 */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* 全局样式 */
 .dashboard {
-  max-width: 1600px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 16px;
   font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
@@ -160,16 +182,7 @@ const formattedAdvice = computed(() =>
   color: #333;
 }
 
-/* 加班记录 */
-.records-card {
-  height: 437px;          /* 固定高度 */
-  /* 或 max-height: 480px; 让内容少时自动收缩 */
-  display: flex;
-  flex-direction: column;
-}
-
-
-/* 顶部标题栏 */
+/* 头部样式 */
 .dashboard-header {
   background: white;
   padding: 16px 24px;
@@ -190,27 +203,24 @@ const formattedAdvice = computed(() =>
   color: #6b7280;
 }
 
-/* 核心三栏布局 */
+/* 主要内容区布局 */
 .dashboard-content {
   display: grid;
-  grid-template-columns: 280px 1fr 1fr; /* 左280px固定，中右自适应 */
+  grid-template-columns: 280px 1fr;
   gap: 20px;
-  align-items: stretch;
 }
 
-/* 左侧边栏 */
-.sidebar,
-.middle-area {
+/* 侧边栏样式 */
+.sidebar {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 100%;            /* 占满网格单元高度 */
 }
 
 .sidebar-card {
   background: white;
   border-radius: 8px;
-  padding: 18px;
+  padding: 16px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
@@ -218,7 +228,7 @@ const formattedAdvice = computed(() =>
   margin: 0 0 16px;
   font-size: 16px;
   color: #1e293b;
-  padding-bottom: 10px;
+  padding-bottom: 8px;
   border-bottom: 1px solid #f1f5f9;
 }
 
@@ -258,39 +268,11 @@ const formattedAdvice = computed(() =>
   line-height: 1.5;
 }
 
-/* 中间区域 */
-.middle-area {
+/* 主内容区域 */
+.main-area {
   display: flex;
   flex-direction: column;
   gap: 20px;
-}
-
-/* 统计容器 */
-.stats-container {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.stat-item {
-  background: white;
-  border-radius: 8px;
-  padding: 16px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.stat-label {
-  display: block;
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
 }
 
 /* 通用卡片样式 */
@@ -309,8 +291,42 @@ const formattedAdvice = computed(() =>
   border-bottom: 1px solid #f1f5f9;
 }
 
-/* 加班记录列表 */
+/* 热力图卡片 */
+.heatmap-card {
+  padding-bottom: 24px;
+}
+
+/* 统计数据容器 */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.stat-item {
+  background: white;
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.stat-label {
+  display: block;
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* 记录列表样式 */
 .records-list {
+  margin-top: 12px;
   scrollbar-width: thin;
   scrollbar-color: #ddd #f5f5f5;
 }
@@ -333,7 +349,7 @@ const formattedAdvice = computed(() =>
   display: grid;
   grid-template-columns: 120px 80px 1fr 80px;
   font-weight: 600;
-  color: #6b7280;
+  color: #64748b;
   padding: 12px 8px;
   background-color: #f8fafc;
   border-radius: 4px 4px 0 0;
@@ -355,7 +371,6 @@ const formattedAdvice = computed(() =>
 
 .list-col {
   word-break: keep-all;
-  align-self: center;
 }
 
 /* 标签样式 */
@@ -388,48 +403,18 @@ const formattedAdvice = computed(() =>
   color: #1e293b;
 }
 
-/* 右侧热力图区域 */
-.right-area {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 320px; /* 防止热力图压缩 */
-}
-
-.heatmap-card {
-  padding-bottom: 24px;
-}
-
-/* 响应式适配（原逻辑不变） */
-@media (max-width: 1200px) {
-  .dashboard-content {
-    grid-template-columns: 280px 1fr;
-    grid-template-areas:
-      "sidebar right"
-      "sidebar middle";
-  }
-  .sidebar { grid-area: sidebar; }
-  .right-area { grid-area: right; }
-  .middle-area { grid-area: middle; }
-}
-
-@media (max-width: 768px) {
+/* 响应式调整 */
+@media (max-width: 1024px) {
   .dashboard-content {
     grid-template-columns: 1fr;
-    grid-template-areas:
-      "sidebar"
-      "right"
-      "middle";
   }
-  .right-area { min-width: auto; }
+
   .stats-container {
     grid-template-columns: 1fr 1fr;
   }
+
   .stats-container .stat-item:nth-child(3) {
     grid-column: 1 / 3;
-  }
-  .list-header, .list-row {
-    grid-template-columns: 80px 70px 1fr 60px;
   }
 }
 
@@ -437,9 +422,15 @@ const formattedAdvice = computed(() =>
   .stats-container {
     grid-template-columns: 1fr;
   }
+
   .stats-container .stat-item:nth-child(3) {
     grid-column: 1;
   }
+
+  .list-header, .list-row {
+    grid-template-columns: 80px 70px 1fr 60px;
+  }
+
   .card {
     padding: 16px;
   }
