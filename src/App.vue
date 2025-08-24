@@ -17,8 +17,8 @@
             <li><span class="label">已加班小时数：</span><span class="value">{{ planData.已加班小时数 }}h</span></li>
             <li><span class="label">剩余需加班：</span><span class="value">{{ planData.剩余需加班 }}h</span></li>
             <li><span class="label">剩余工作日：</span><span class="value">{{ planData.剩余工作日 }}天</span></li>
-            <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}个</span></li>
-            <li><span class="label">每日目标：</span><span class="value">{{ planData["每日目标(h)"] }}h</span></li>
+            <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}天</span></li>
+            <li><span class="label">工作日每日目标：</span><span class="value">{{ planData["工作日每日目标(h)"] }}h</span></li>
           </ul>
         </div>
 
@@ -210,13 +210,14 @@ const formattedAdvice = computed(() =>
 .sidebar-card {
   background: white;
   border-radius: 8px;
-  padding: 18px;
+  padding: 12px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 .sidebar-card h3 {
   margin: 0 0 16px;
-  font-size: 16px;
+  font-size: 18px; /* 增大字号 */
+  text-align: center; /* 居中对齐 */
   color: #1e293b;
   padding-bottom: 10px;
   border-bottom: 1px solid #f1f5f9;
@@ -297,6 +298,7 @@ const formattedAdvice = computed(() =>
 .card {
   background: white;
   border-radius: 8px;
+  text-align: center; /* 居中对齐 */
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }

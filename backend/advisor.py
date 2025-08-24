@@ -14,6 +14,7 @@ import chinese_calendar as cc
 import pandas as pd
 import requests
 import yaml
+
 # ---------- 工具 ----------
 def _today() -> dt.date:
     return dt.date.today()
@@ -240,11 +241,18 @@ def _plain_rush_prompt(**ctx) -> str:
 def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
     today = _today()
     required = cfg["office"]["required_overtime_hours_monthly"]
-    already = float(df["overtime_hours"].sum())
+
+    # 仅统计当前月份加班时长
+    current_month = pd.Timestamp(today).to_period('M')
+    already = float(
+        df.loc[
+            pd.to_datetime(df["date"]).dt.to_period('M') == current_month,
+            "overtime_hours"
+        ].sum()
+    )
     need = max(required - already, 0)
 
     # ── 2️⃣ 未达标：继续原有逻辑 ───────────────────────────
-    # ↓↓↓ 下面就是你原来的 if/else（无需改动）
     days_total = _workdays_left_this_month(dt.date(today.year, today.month, 1))
     days_left = _workdays_left_this_month(today)
     ratio = 1 - days_left / max(days_total, 1)
@@ -264,7 +272,7 @@ def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
         "已加班小时数": round(already, 1),
         "剩余需加班": round(need, 1),
         "剩余工作日": days_left,
-        "每日目标(h)": None,
+        "工作日每日目标(h)": None,
         "周六剩余": saturdays_left,
         "周末冲刺(h)": None,
         "来源": None,
@@ -288,13 +296,13 @@ def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
         )
         base_cols.update({
             "阶段": "月末冲刺",
-            "每日目标(h)": "-",
+            "工作日每日目标(h)": "-",
             "周末冲刺(h)": round(weekend_hours, 1),
             "来源": "AI" if ai_text else "兜底",
             "AI错误": err or None
         })
     else:
-        daily = round(remain_after_sat / max(days_left, 1), 1) if days_left else 0
+        daily = max(round(remain_after_sat / max(days_left, 1), 1), 0) if days_left else 0
         end_clock = (dt.datetime.combine(today, dt.time(18, 0))
                      + dt.timedelta(hours=daily)).strftime("%H:%M")
         prompt = _plain_text_prompt(
@@ -317,7 +325,7 @@ def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
             )
             src = "兜底"
         base_cols.update({
-            "每日目标(h)": str(daily) if days_left else "-",
+            "工作日每日目标(h)": str(daily) if days_left else "-",
             "周末冲刺(h)": "-",
             "来源": src,
             "AI错误": err or None
