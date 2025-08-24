@@ -1,105 +1,107 @@
 <template>
-  <div class="dashboard">
-    <!-- 顶部标题栏 -->
-    <header class="dashboard-header">
-      <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
-      <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
-      <!-- AI建议按钮 -->
-      <button class="advice-btn" @click="showAdviceDialog = true">
-        查看建议
-      </button>
-    </header>
+  <div class="page-container">
+    <div class="dashboard">
+      <!-- 顶部标题栏 -->
+      <header class="dashboard-header">
+        <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
+        <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
+        <!-- AI建议按钮 -->
+        <button class="advice-btn" @click="showAdviceDialog = true">
+          漂流瓶来信
+        </button>
+      </header>
 
-    <!-- 核心三栏布局（无改动） -->
-    <main class="dashboard-content">
-      <!-- 左侧边栏 -->
-      <aside class="sidebar">
-        <div class="sidebar-card">
-          <h3>加班概览</h3>
-          <ul class="overview-list">
-            <li><span class="label">当前阶段：</span><span class="value">{{ planData.阶段 }}</span></li>
-            <li><span class="label">已加班小时数：</span><span class="value">{{ planData.已加班小时数 }}h</span></li>
-            <li><span class="label">剩余需加班：</span><span class="value">{{ planData.剩余需加班 }}h</span></li>
-            <li><span class="label">剩余工作日：</span><span class="value">{{ planData.剩余工作日 }}天</span></li>
-            <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}天</span></li>
-            <li><span class="label">工作日每日目标：</span><span class="value">{{ planData["工作日每日目标(h)"] }}h</span></li>
-          </ul>
-        </div>
-
-        <div class="sidebar-card holiday-card">
-          <h3>假期提醒</h3>
-          <p>{{ planData.this_month_holiday }}</p>
-          <p>{{ planData.prev_holiday }}</p>
-          <p>{{ planData.next_holiday }}</p>
-        </div>
-      </aside>
-
-      <!-- 中间区域 -->
-      <div class="middle-area">
-        <div class="stats-container">
-          <div class="stat-item">
-            <span class="stat-label">总记录数</span>
-            <span class="stat-value">{{ reportData.length }}条</span>
+      <!-- 核心三栏布局 -->
+      <main class="dashboard-content">
+        <!-- 左侧边栏 -->
+        <aside class="sidebar">
+          <div class="sidebar-card">
+            <h3>加班概览</h3>
+            <ul class="overview-list">
+              <li><span class="label">当前阶段：</span><span class="value">{{ planData.阶段 }}</span></li>
+              <li><span class="label">已加班小时数：</span><span class="value">{{ planData.已加班小时数 }}h</span></li>
+              <li><span class="label">剩余需加班：</span><span class="value">{{ planData.剩余需加班 }}h</span></li>
+              <li><span class="label">剩余工作日：</span><span class="value">{{ planData.剩余工作日 }}天</span></li>
+              <li><span class="label">含周六：</span><span class="value">{{ planData.周六剩余 }}天</span></li>
+              <li><span class="label">工作日每日目标：</span><span class="value">{{ planData["工作日每日目标(h)"] }}h</span></li>
+            </ul>
           </div>
-          <div class="stat-item">
-            <span class="stat-label">最长加班</span>
-            <span class="stat-value">{{ maxOvertimeHours }}h</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">平均时长</span>
-            <span class="stat-value">{{ averageOvertime }}h</span>
-          </div>
-        </div>
 
-        <div class="card records-card">
-          <h2>{{ currentMonth.slice(5) }}月加班记录详情</h2>
-          <div class="records-list"
-               :style="{ maxHeight: reportData.length > 5 ? '320px' : 'auto',
-                         overflowY: reportData.length > 5 ? 'auto' : 'visible' }">
-            <div class="list-header">
-              <div class="list-col">日期</div>
-              <div class="list-col">类型</div>
-              <div class="list-col">时间段</div>
-              <div class="list-col">时长</div>
+          <div class="sidebar-card holiday-card">
+            <h3>假期提醒</h3>
+            <p>{{ planData.this_month_holiday }}</p>
+            <p>{{ planData.prev_holiday }}</p>
+            <p>{{ planData.next_holiday }}</p>
+          </div>
+        </aside>
+
+        <!-- 中间区域 -->
+        <div class="middle-area">
+          <div class="stats-container">
+            <div class="stat-item">
+              <span class="stat-label">总记录数</span>
+              <span class="stat-value">{{ reportData.length }}条</span>
             </div>
-            <div class="list-row" v-for="(record, index) in currentMonthRecords" :key="index">
-              <div class="list-col">{{ record.date }}</div>
-              <div class="list-col">
-                <span :class="record.is_workday ? 'tag workday' : 'tag weekend'">
-                  {{ record.is_workday ? '工作日' : '周末' }}
-                </span>
+            <div class="stat-item">
+              <span class="stat-label">最长加班</span>
+              <span class="stat-value">{{ maxOvertimeHours }}h</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">平均时长</span>
+              <span class="stat-value">{{ averageOvertime }}h</span>
+            </div>
+          </div>
+
+          <div class="card records-card">
+            <h2>{{ currentMonth.slice(5) }}月加班记录详情</h2>
+            <div class="records-list"
+                 :style="{ maxHeight: reportData.length > 5 ? '320px' : 'auto',
+                           overflowY: reportData.length > 5 ? 'auto' : 'visible' }">
+              <div class="list-header">
+                <div class="list-col">日期</div>
+                <div class="list-col">类型</div>
+                <div class="list-col">时间段</div>
+                <div class="list-col">时长</div>
               </div>
-              <div class="list-col">{{ record.actual_start }} - {{ record.actual_end }}</div>
-              <div class="list-col">{{ record.overtime_hours }}h</div>
+              <div class="list-row" v-for="(record, index) in currentMonthRecords" :key="index">
+                <div class="list-col">{{ record.date }}</div>
+                <div class="list-col">
+                  <span :class="record.is_workday ? 'tag workday' : 'tag weekend'">
+                    {{ record.is_workday ? '工作日' : '周末' }}
+                  </span>
+                </div>
+                <div class="list-col">{{ record.actual_start }} - {{ record.actual_end }}</div>
+                <div class="list-col">{{ record.overtime_hours }}h</div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 右侧热力图 -->
-      <div class="right-area">
-        <div class="card heatmap-card">
-          <h2>{{ currentMonth.slice(5) }}月加班热力图</h2>
-          <MonthlyHeatmap
-            :year-month="currentMonth"
-            :data="heatmapData"
-          />
+        <!-- 右侧热力图 -->
+        <div class="right-area">
+          <div class="card heatmap-card">
+            <h2>{{ currentMonth.slice(5) }}月加班热力图</h2>
+            <MonthlyHeatmap
+              :year-month="currentMonth"
+              :data="heatmapData"
+            />
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
 
-    <!-- AI建议弹窗 -->
-    <div class="dialog-overlay" v-if="showAdviceDialog" @click="showAdviceDialog = false">
-      <div class="dialog" @click.stop>
-        <div class="dialog-header">
-          <h3>AI建议</h3>
-          <button class="close-btn" @click="showAdviceDialog = false">×</button>
-        </div>
-        <div class="dialog-content">
-          <div class="advice-content" v-html="formattedAdvice"></div>
-        </div>
-        <div class="dialog-footer">
-          <button class="confirm-btn" @click="showAdviceDialog = false">关闭</button>
+      <!-- AI建议弹窗 -->
+      <div class="dialog-overlay" v-if="showAdviceDialog" @click="showAdviceDialog = false">
+        <div class="dialog" @click.stop>
+          <div class="dialog-header">
+            <h3>漂流瓶</h3>
+            <button class="close-btn" @click="showAdviceDialog = false">×</button>
+          </div>
+          <div class="dialog-content">
+            <div class="advice-content" v-html="formattedAdvice"></div>
+          </div>
+          <div class="dialog-footer">
+            <button class="confirm-btn" @click="showAdviceDialog = false">关闭</button>
+          </div>
         </div>
       </div>
     </div>
@@ -159,12 +161,19 @@ const formattedAdvice = computed(() =>
   padding: 0;
 }
 
-.dashboard {
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 16px;
-  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+/* 新增：页面容器，用于整体居中 */
+.page-container {
+  display: flex;
+  justify-content: center;
   background-color: #f5f7fa;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+.dashboard {
+  width: 100%;
+  max-width: 1600px;
+  font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   color: #333;
 }
 
@@ -179,11 +188,12 @@ const formattedAdvice = computed(() =>
 /* 顶部标题栏 */
 .dashboard-header {
   background: white;
-  padding: 16px 24px;
+  padding: 5px 24px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   margin-bottom: 20px;
   position: relative;
+  text-align: center; /* 标题栏内容居中 */
 }
 
 .dashboard-header h1 {
@@ -220,7 +230,7 @@ const formattedAdvice = computed(() =>
   display: grid;
   grid-template-columns: 280px 1fr 1fr; /* 左280px固定，中右自适应 */
   gap: 20px;
-  align-items: stretch;
+  align-items: start; /* 顶部对齐，而不是拉伸 */
 }
 
 /* 左侧边栏 */
@@ -229,7 +239,6 @@ const formattedAdvice = computed(() =>
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 100%;            /* 占满网格单元高度 */
 }
 
 .sidebar-card {
@@ -282,6 +291,7 @@ const formattedAdvice = computed(() =>
   font-size: 14px;
   color: #64748b;
   line-height: 1.5;
+  text-align: center; /* 假期提醒文字居中 */
 }
 
 /* 中间区域 */
@@ -323,7 +333,6 @@ const formattedAdvice = computed(() =>
 .card {
   background: white;
   border-radius: 8px;
-  text-align: center; /* 居中对齐 */
   padding: 20px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
@@ -334,6 +343,7 @@ const formattedAdvice = computed(() =>
   color: #1e293b;
   padding-bottom: 12px;
   border-bottom: 1px solid #f1f5f9;
+  text-align: center; /* 卡片标题居中 */
 }
 
 /* 加班记录列表 */
@@ -440,6 +450,8 @@ const formattedAdvice = computed(() =>
   margin: 0;
   font-size: 18px;
   color: #1e293b;
+  text-align: center;
+  flex: 1; /* 让标题占据中间空间 */
 }
 
 .close-btn {
@@ -481,7 +493,7 @@ const formattedAdvice = computed(() =>
   padding: 16px 20px;
   border-top: 1px solid #f1f5f9;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center; /* 按钮居中 */
 }
 
 .confirm-btn {
