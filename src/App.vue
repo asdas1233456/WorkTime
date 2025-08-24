@@ -5,13 +5,9 @@
       <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
       <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
       <!-- AI建议按钮 -->
-      <button class="advice-btn" @click="showAdvice = !showAdvice">
-        {{ showAdvice ? '收起建议' : '查看建议' }}
+      <button class="advice-btn" @click="showAdviceDialog = true">
+        查看建议
       </button>
-      <!-- AI建议内容 -->
-      <div class="advice-card" v-if="showAdvice">
-        <div class="advice-content" v-html="formattedAdvice"></div>
-      </div>
     </header>
 
     <!-- 核心三栏布局（无改动） -->
@@ -84,15 +80,6 @@
       <div class="right-area">
         <div class="card heatmap-card">
           <h2>{{ currentMonth.slice(5) }}月加班热力图</h2>
-
-<!--          &lt;!&ndash; 月份选择器 &ndash;&gt;-->
-<!--          <select v-model="currentMonth" style="margin-bottom:8px;">-->
-<!--            <option v-for="m in 12" :key="m"-->
-<!--                    :value="`2025-${m.toString().padStart(2,'0')}`">-->
-<!--              2025-{{ m.toString().padStart(2,'0') }}-->
-<!--            </option>-->
-<!--          </select>-->
-
           <MonthlyHeatmap
             :year-month="currentMonth"
             :data="heatmapData"
@@ -100,6 +87,22 @@
         </div>
       </div>
     </main>
+
+    <!-- AI建议弹窗 -->
+    <div class="dialog-overlay" v-if="showAdviceDialog" @click="showAdviceDialog = false">
+      <div class="dialog" @click.stop>
+        <div class="dialog-header">
+          <h3>AI建议</h3>
+          <button class="close-btn" @click="showAdviceDialog = false">×</button>
+        </div>
+        <div class="dialog-content">
+          <div class="advice-content" v-html="formattedAdvice"></div>
+        </div>
+        <div class="dialog-footer">
+          <button class="confirm-btn" @click="showAdviceDialog = false">关闭</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -111,8 +114,8 @@ import reportData from '../data/overtime_report.json'
 
 // 当前月份（动态）
 const currentMonth = ref('2025-08')
-// 控制AI建议显示/隐藏
-const showAdvice = ref(false)
+// 控制AI建议弹窗显示/隐藏
+const showAdviceDialog = ref(false)
 
 // 当月记录过滤
 const currentMonthRecords = computed(() =>
@@ -168,7 +171,6 @@ const formattedAdvice = computed(() =>
 /* 加班记录 */
 .records-card {
   height: 437px;          /* 固定高度 */
-  /* 或 max-height: 480px; 让内容少时自动收缩 */
   display: flex;
   flex-direction: column;
 }
@@ -211,16 +213,6 @@ const formattedAdvice = computed(() =>
 
 .advice-btn:hover {
   background-color: #2563eb;
-}
-
-/* 顶部AI建议卡片 */
-.advice-card {
-  background: #f8fafc;
-  border-radius: 6px;
-  padding: 16px;
-  font-size: 14px;
-  line-height: 1.6;
-  border: 1px solid #e2e8f0;
 }
 
 /* 核心三栏布局 */
@@ -411,13 +403,100 @@ const formattedAdvice = computed(() =>
   background-color: #f97316;
 }
 
-/* AI建议内容 */
+/* AI建议弹窗样式 */
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background-color: white;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dialog-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dialog-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #1e293b;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #64748b;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.dialog-content {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
 .advice-content {
   color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .advice-content strong {
   color: #1e293b;
+}
+
+.dialog-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.confirm-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.confirm-btn:hover {
+  background-color: #2563eb;
 }
 
 /* 右侧热力图区域 */
@@ -432,7 +511,7 @@ const formattedAdvice = computed(() =>
   padding-bottom: 24px;
 }
 
-/* 响应式适配（原逻辑不变） */
+/* 响应式适配 */
 @media (max-width: 1200px) {
   .dashboard-content {
     grid-template-columns: 280px 1fr;
