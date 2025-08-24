@@ -298,7 +298,7 @@ def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
             "阶段": "月末冲刺",
             "工作日每日目标(h)": "-",
             "周末冲刺(h)": round(weekend_hours, 1),
-            "来源": "AI" if ai_text else "兜底",
+            "来源": "AI" if ai_text else "本地",
             "AI错误": err or None
         })
     else:
@@ -323,7 +323,7 @@ def make_plan(df: pd.DataFrame, cfg: Dict) -> Tuple[pd.DataFrame, str, Dict]:
                 )
                 + "\n\n" + holiday_emoji_block
             )
-            src = "兜底"
+            src = "本地"
         base_cols.update({
             "工作日每日目标(h)": str(daily) if days_left else "-",
             "周末冲刺(h)": "-",

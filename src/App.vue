@@ -291,7 +291,6 @@ const formattedAdvice = computed(() =>
   font-size: 14px;
   color: #64748b;
   line-height: 1.5;
-  text-align: center; /* 假期提醒文字居中 */
 }
 
 /* 中间区域 */
