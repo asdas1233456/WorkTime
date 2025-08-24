@@ -4,6 +4,14 @@
     <header class="dashboard-header">
       <h1>{{ currentMonth.slice(5) }}月加班看板</h1>
       <p>数据更新时间：{{ planData.current_date }} | 来源：{{ planData.来源 }}</p>
+      <!-- AI建议按钮 -->
+      <button class="advice-btn" @click="showAdvice = !showAdvice">
+        {{ showAdvice ? '收起建议' : '查看建议' }}
+      </button>
+      <!-- AI建议内容 -->
+      <div class="advice-card" v-if="showAdvice">
+        <div class="advice-content" v-html="formattedAdvice"></div>
+      </div>
     </header>
 
     <!-- 核心三栏布局（无改动） -->
@@ -70,11 +78,6 @@
             </div>
           </div>
         </div>
-
-        <div class="card advice-card">
-          <h2>AI建议</h2>
-          <div class="advice-content" v-html="formattedAdvice"></div>
-        </div>
       </div>
 
       <!-- 右侧热力图 -->
@@ -108,6 +111,8 @@ import reportData from '../data/overtime_report.json'
 
 // 当前月份（动态）
 const currentMonth = ref('2025-08')
+// 控制AI建议显示/隐藏
+const showAdvice = ref(false)
 
 // 当月记录过滤
 const currentMonthRecords = computed(() =>
@@ -176,6 +181,7 @@ const formattedAdvice = computed(() =>
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   margin-bottom: 20px;
+  position: relative;
 }
 
 .dashboard-header h1 {
@@ -185,9 +191,36 @@ const formattedAdvice = computed(() =>
 }
 
 .dashboard-header p {
-  margin: 0;
+  margin: 0 0 12px;
   font-size: 14px;
   color: #6b7280;
+}
+
+/* AI建议按钮 */
+.advice-btn {
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background-color 0.2s;
+}
+
+.advice-btn:hover {
+  background-color: #2563eb;
+}
+
+/* 顶部AI建议卡片 */
+.advice-card {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+  border: 1px solid #e2e8f0;
 }
 
 /* 核心三栏布局 */
@@ -378,12 +411,9 @@ const formattedAdvice = computed(() =>
   background-color: #f97316;
 }
 
-/* AI建议区域 */
+/* AI建议内容 */
 .advice-content {
-  margin-top: 12px;
-  font-size: 14px;
   color: #475569;
-  line-height: 1.6;
 }
 
 .advice-content strong {
